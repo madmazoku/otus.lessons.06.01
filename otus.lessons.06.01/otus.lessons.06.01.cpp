@@ -68,7 +68,7 @@ struct page {
             size_t start_room = 0;
             size_t size_room = 0;
             bool has_room = false;
-            for (uint8_t* u = (uint8_t*)usage; u < (uint8_t*)usage + page_size(); ++u) {
+            for (uint8_t* u = (uint8_t*)usage; u < (uint8_t*)usage + sizeof(usage); ++u) {
                 if (*u == 0x00) {
                     if (!has_room) {
                         has_room = true;
@@ -92,7 +92,7 @@ struct page {
     {
         if (data == nullptr)
             return;
-        else if ((uint8_t*)data <= (uint8_t*)p && (uint8_t*)p < (uint8_t*)data + page_size() * obj_size())
+        else if ((uint8_t*)data <= (uint8_t*)p && (uint8_t*)p < (uint8_t*)data + sizeof(usage) * obj_size())
             set_usage(((uint8_t*)p - (uint8_t*)data) / obj_size(), n, false);
         else
             next->deallocate(p, n);

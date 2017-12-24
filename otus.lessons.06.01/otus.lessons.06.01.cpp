@@ -26,12 +26,13 @@ struct page {
     page* next;
     void* data;
     void* usage;
+    size_t alloc_size;
 
     virtual page* create() = 0;
     virtual size_t page_size() = 0;
     virtual size_t obj_size() = 0;
 
-    page() : next(nullptr), data(nullptr), usage(nullptr)
+    page() : next(nullptr), data(nullptr), usage(nullptr), alloc_size(0)
     {
     }
     ~page()
@@ -53,7 +54,7 @@ struct page {
     void* allocate(size_t n)
     {
         if (data == nullptr) {
-            size_t alloc_size = n > page_size() ? n : page_size();
+            alloc_size = n > page_size() ? n : page_size();
             data = std::malloc(alloc_size * obj_size());
             usage = reinterpret_cast<uint8_t*>(std::malloc(alloc_size * obj_size()));
             next = create();
@@ -68,7 +69,7 @@ struct page {
             size_t start_room = 0;
             size_t size_room = 0;
             bool has_room = false;
-            for (uint8_t* u = (uint8_t*)usage; u < (uint8_t*)usage + sizeof(usage); ++u) {
+            for (uint8_t* u = (uint8_t*)usage; u < (uint8_t*)usage + alloc_size; ++u) {
                 if (*u == 0x00) {
                     if (!has_room) {
                         has_room = true;
@@ -92,7 +93,7 @@ struct page {
     {
         if (data == nullptr)
             return;
-        else if ((uint8_t*)data <= (uint8_t*)p && (uint8_t*)p < (uint8_t*)data + sizeof(usage) * obj_size())
+        else if ((uint8_t*)data <= (uint8_t*)p && (uint8_t*)p < (uint8_t*)data + alloc_size * obj_size())
             set_usage(((uint8_t*)p - (uint8_t*)data) / obj_size(), n, false);
         else
             next->deallocate(p, n);
@@ -101,7 +102,7 @@ struct page {
     void dump(std::ostream& os) {
         if (data != nullptr) {
             os << "[ " << obj_size() << " / " << page_size() << " ] ";
-            for (uint8_t* u = (uint8_t*)usage; u < (uint8_t*)usage + page_size(); ++u)
+            for (uint8_t* u = (uint8_t*)usage; u < (uint8_t*)usage + alloc_size; ++u)
                 os << " " << (*u != 0x00 ? "+" : "-");
             os << "\n";
             next->dump(os);
@@ -277,8 +278,12 @@ int main()
         pages.dump(std::cout);
 
         std::cout << "print content" << std::endl;
-        for (const auto &p : m)
-            std::cout << '"' << p.first << "\": " << p.second << std::endl;
+        size_t count = 0;
+        for (const auto &p : m) {
+            std::cout << "[ " << count << " ]: \"" << p.first << "\": " << p.second << std::endl;
+            if(++count == 20)
+                break;
+        }
 
         std::cout << "leave scope" << std::endl;
     }

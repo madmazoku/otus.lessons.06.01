@@ -14,4 +14,15 @@
 
 #endif
 
-// TODO: reference additional headers your program requires here
+#include <sstream>
+#include <boost/type_index.hpp>
+
+template<class T>
+struct pretty_type_name {
+    std::string operator()() const
+    {
+        std::stringstream ss;
+        ss << '[' << sizeof(T) << "] " << boost::typeindex::type_id_with_cvr<T>().pretty_name();
+        return ss.str();
+    }
+};

@@ -44,12 +44,13 @@ struct page {
             next = create();
             if (!data || !usage || !next)
                 throw std::bad_alloc();
+            std::memset(data, 0x00, alloc_size * obj_size());
             set_usage(0, n, 0x01);
             set_usage(n, alloc_size - n, 0x00);
             return data;
         }
 
-        if (n < page_size()) {
+        if (n <= alloc_size) {
             size_t start_room = 0;
             size_t size_room = 0;
             bool has_room = false;
@@ -97,14 +98,6 @@ struct page {
 template<typename T, size_t size = 11> 
 struct page_impl : public page
 {
-    T* allocate(size_t n) 
-    {
-        return reinterpret_cast<T*>(allocate(n));
-    }
-    void deallocate(T* p, size_t n)
-    {
-        deallocate(reinterpret_cast<void*>(p), n);
-    }
     page* create() override { return new page_impl<T, size>; }
     size_t page_size() override { return size; };
     size_t obj_size() override { return  sizeof(T); }

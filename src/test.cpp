@@ -10,7 +10,14 @@
 #include "allocator.h"
 #include "container.h"
 
+#include "../bin/version.h"
+
 BOOST_AUTO_TEST_SUITE( test_suite )
+
+BOOST_AUTO_TEST_CASE( test_version )
+{
+    BOOST_CHECK_GT(version(), 0);
+}
 
 BOOST_AUTO_TEST_CASE( test_page )
 {

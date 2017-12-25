@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 template<typename T, typename Alloc_>
 class linked_list
 {

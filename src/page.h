@@ -5,7 +5,6 @@
 #include <exception>
 #include <algorithm>
 #include <cstring>
-#include "stdafx.h"
 
 struct page {
     page* next;

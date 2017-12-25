@@ -4,6 +4,8 @@
 #include "stdafx.h"
 
 #include <map>
+#include <boost/program_options.hpp>
+
 #include "allocator.h"
 #include "container.h"
 

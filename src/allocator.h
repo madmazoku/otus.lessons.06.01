@@ -5,6 +5,11 @@
 template<typename T, size_t size>
 struct custom_allocator {
     using value_type = T;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+
     template< class U > struct rebind {
         typedef custom_allocator<U, size> other;
     };

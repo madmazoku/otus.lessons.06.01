@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.2)
 
 project(allocator VERSION 0.0.$ENV{TRAVIS_BUILD_NUMBER})
 
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
 find_package(Boost COMPONENTS unit_test_framework program_options REQUIRED)
 
 set(CPACK_GENERATOR DEB)

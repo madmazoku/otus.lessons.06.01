@@ -1,16 +1,22 @@
 // otus.lessons.06.01.cpp : Defines the entry point for the console application.
 //
 
-#define BOOST_TEST_MODULE TestMain
-#include <boost/test/unit_test.hpp>
-
 #include "stdafx.h"
+
+#ifdef __unix__
+#define BOOST_TEST_MODULE main
+#endif
+#include <boost/test/unit_test.hpp>
 
 #include <map>
 #include "allocator.h"
 #include "container.h"
 
+#ifdef __unix__
 #include "../bin/version.h"
+#else
+#include "version.h"
+#endif
 
 BOOST_AUTO_TEST_SUITE( test_suite )
 

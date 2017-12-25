@@ -6,14 +6,25 @@
 #include <map>
 #include <boost/program_options.hpp>
 
+#ifndef __unix__
+#define BOOST_TEST_MODULE test
+#define BOOST_TEST_NO_MAIN
+#include <boost/test/unit_test.hpp>
+#endif
+
 #include "allocator.h"
 #include "container.h"
+
+#ifdef __unix__
 #include "../bin/version.h"
+#else
+#include "version.h"
+#endif
 
 template<typename T>
-constexpr T fact(T n)
+T fact(T n)
 {
-    return n > 1 ? n * fact(n-1) : n;
+    return n > 1 ? n * fact(n-1) : 1;
 }
 
 void try_std_allocator_std_container()
@@ -72,6 +83,9 @@ int main(int argc, char** argv)
     boost::program_options::options_description desc("Allowed options");
     desc.add_options()
     ("help,h", "print usage message")
+#ifndef __unix__
+    ("suite,s", "do tests suite")
+#endif
     ("version,v", "print version number")
     ("allocator,a", boost::program_options::value<std_custom>(), "[std|custom]")
     ("container,c", boost::program_options::value<std_custom>(), "[std|custom]");
@@ -82,9 +96,13 @@ int main(int argc, char** argv)
 
     if (vm.count("help")) {
         std::cout << desc << std::endl;
-    } else if (vm.count("version")) {
+    }
+    else if (vm.count("version")) {
         std::cout << "Build version: " << version() << std::endl;
         std::cout << "Boost version: " << (BOOST_VERSION / 100000) << '.' << (BOOST_VERSION / 100 % 1000) << '.' << (BOOST_VERSION % 100) << std::endl;
+    }
+    else if (vm.count("suite")) {
+        return boost::unit_test::unit_test_main(&init_unit_test, argc, argv);
     } else {
         std::string allocator = vm.count("allocator") ? vm["allocator"].as<std_custom>().value : "";
         std::string container = vm.count("container") ? vm["container"].as<std_custom>().value : "";

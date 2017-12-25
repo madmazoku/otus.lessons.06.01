@@ -1,3 +1,6 @@
 #pragma once
 
-inline int version() { return 1; }
+inline int version()
+{
+    return 1;
+}

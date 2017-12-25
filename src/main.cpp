@@ -63,9 +63,11 @@ void try_custom_allocator_custom_container()
         std::cout << v << std::endl;
 }
 
-struct std_custom {
-  std_custom(std::string const& val): value(val) {}
-  std::string value;
+class std_custom
+{
+public:
+    std_custom(std::string const& value_): value(value_) {}
+    std::string value;
 };
 void validate(boost::any& v,
               const std::vector<std::string>& values,
@@ -74,7 +76,9 @@ void validate(boost::any& v,
     boost::program_options::validators::check_first_occurrence(v);
     const std::string& s = boost::program_options::validators::get_single_string(values);
 
-    if(!(s.empty() || s == "std" || s == "custom"))
+    if(s.empty() || s == "std" || s == "custom")
+        v = boost::any(std_custom(s));
+    else
         throw boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value);
 }
 
@@ -87,8 +91,8 @@ int main(int argc, char** argv)
     ("suite,s", "do tests suite")
 #endif
     ("version,v", "print version number")
-    ("allocator,a", boost::program_options::value<std_custom>(), "[std|custom]")
-    ("container,c", boost::program_options::value<std_custom>(), "[std|custom]");
+    ("allocator,a", boost::program_options::value<std_custom>(), "try allocator which is [std|custom]")
+    ("container,c", boost::program_options::value<std_custom>(), "try container which is [std|custom]");
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -96,13 +100,13 @@ int main(int argc, char** argv)
 
     if (vm.count("help")) {
         std::cout << desc << std::endl;
-    }
-    else if (vm.count("version")) {
+    } else if (vm.count("version")) {
         std::cout << "Build version: " << version() << std::endl;
         std::cout << "Boost version: " << (BOOST_VERSION / 100000) << '.' << (BOOST_VERSION / 100 % 1000) << '.' << (BOOST_VERSION % 100) << std::endl;
-    }
-    else if (vm.count("suite")) {
+#ifndef __unix__
+    } else if (vm.count("suite")) {
         return boost::unit_test::unit_test_main(&init_unit_test, argc, argv);
+#endif
     } else {
         std::string allocator = vm.count("allocator") ? vm["allocator"].as<std_custom>().value : "";
         std::string container = vm.count("container") ? vm["container"].as<std_custom>().value : "";

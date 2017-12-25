@@ -5,6 +5,7 @@
 #include <exception>
 #include <algorithm>
 #include <cstring>
+#include "stdafx.h"
 
 struct page {
     page* next;
@@ -65,8 +66,7 @@ struct page {
                         set_usage(start_room, n, 0x01);
                         return (uint8_t*)data + start_room * obj_size();
                     }
-                }
-                else
+                } else
                     has_room = false;
             }
         }
@@ -84,7 +84,8 @@ struct page {
             next->deallocate(p, n);
     }
 
-    void dump(std::ostream& os) {
+    void dump(std::ostream& os)
+    {
         if (data != nullptr) {
             os << "[ " << obj_size() << " / " << page_size() << " ] ";
             for (uint8_t* u = (uint8_t*)usage; u < (uint8_t*)usage + alloc_size; ++u)
@@ -95,12 +96,20 @@ struct page {
     }
 };
 
-template<typename T, size_t size = 11> 
-struct page_impl : public page
-{
-    page* create() override { return new page_impl<T, size>; }
-    size_t page_size() override { return size; };
-    size_t obj_size() override { return  sizeof(T); }
+template<typename T, size_t size = 11>
+struct page_impl : public page {
+    page* create() override
+    {
+        return new page_impl<T, size>;
+    }
+    size_t page_size() override
+    {
+        return size;
+    };
+    size_t obj_size() override
+    {
+        return  sizeof(T);
+    }
 };
 
 struct page_info {
@@ -117,7 +126,8 @@ struct page_info {
         if(next)
             delete next;
     }
-    page* get_page(size_t obj_size, size_t page_size) {
+    page* get_page(size_t obj_size, size_t page_size)
+    {
         if (data == nullptr)
             return nullptr;
         else if(obj_size == data->obj_size() && page_size == data->page_size())
@@ -125,7 +135,8 @@ struct page_info {
         else
             return next->get_page(obj_size, page_size);
     }
-    void add_page(page* data_) {
+    void add_page(page* data_)
+    {
         if (data == nullptr) {
             data = data_;
             next = new page_info;
@@ -133,12 +144,12 @@ struct page_info {
             next->add_page(data_);
     }
 
-    void dump(std::ostream &os) {
+    void dump(std::ostream &os)
+    {
         if (data != nullptr) {
             data->dump(os);
             next->dump(os);
-        }
-        else
+        } else
             os << std::endl;
     }
 };

@@ -8,6 +8,7 @@
 
 #include <map>
 #include "allocator.h"
+#include "container.h"
 
 BOOST_AUTO_TEST_SUITE( test_suite )
 
@@ -87,7 +88,7 @@ BOOST_AUTO_TEST_CASE( test_allocator )
         test_data(uint32_t data_ = 0) : data(data_) {}
     };
 
-    auto a = logging_allocator<test_data, 3>{};
+    auto a = custom_allocator<test_data, 3> {};
 
     test_data* b = a.allocate(2);
     a.construct(b, 0x01);
@@ -103,7 +104,7 @@ BOOST_AUTO_TEST_CASE( test_allocator )
 
 BOOST_AUTO_TEST_CASE( test_allocator_std_container )
 {
-    auto m = std::map<uint32_t, uint32_t, std::less<uint32_t>, logging_allocator< std::pair< uint32_t, uint32_t >, 4 > >{};
+    auto m = std::map<uint32_t, uint32_t, std::less<uint32_t>, custom_allocator< std::pair< uint32_t, uint32_t >, 4 > > {};
 
     m[1] = 1;
     m[2] = 2;
@@ -126,6 +127,63 @@ BOOST_AUTO_TEST_CASE( test_allocator_std_container )
 
     m.erase(2);
     BOOST_CHECK(m.find(2) == m.end());
+}
+
+template<typename Alloc>
+void test_container()
+{
+    auto ll = linked_list<uint32_t, Alloc > {};
+
+    size_t count = 0;
+    ll.push_front(++count);
+    ll.push_front(++count);
+    ll.push_front(++count);
+
+    BOOST_CHECK_EQUAL(ll.size(), 3);
+
+    for(auto v : ll)
+        BOOST_CHECK_EQUAL(v, count--);
+
+    auto it = ll.begin();
+    BOOST_CHECK_EQUAL(*it, 3);
+    ++it;
+    BOOST_CHECK_EQUAL(*it, 2);
+    ll.erase(it);
+    BOOST_CHECK_EQUAL(ll.size(), 2);
+
+    it = ll.begin();
+    BOOST_CHECK_EQUAL(*it, 3);
+    ++it;
+    BOOST_CHECK_EQUAL(*it, 1);
+    ll.erase(it);
+    BOOST_CHECK_EQUAL(ll.size(), 1);
+
+    it = ll.begin();
+    BOOST_CHECK_EQUAL(*it, 3);
+    ll.erase(it);
+    BOOST_CHECK_EQUAL(ll.size(), 0);
+    BOOST_CHECK(ll.begin() == ll.end());
+
+    ll.push_back(++count);
+    ll.push_back(++count);
+    ll.push_back(++count);
+    BOOST_CHECK_EQUAL(ll.size(), 3);
+    for(auto v : ll)
+        BOOST_CHECK_EQUAL(v, 3-(--count));
+
+    ll.clear();
+    BOOST_CHECK_EQUAL(ll.size(), 0);
+    BOOST_CHECK(ll.begin() == ll.end());
+}
+
+BOOST_AUTO_TEST_CASE( test_allocator_container )
+{
+    test_container<custom_allocator< uint32_t, 5 > >();
+}
+
+BOOST_AUTO_TEST_CASE( test_std_allocator_container )
+{
+    test_container<std::allocator< uint32_t > >();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

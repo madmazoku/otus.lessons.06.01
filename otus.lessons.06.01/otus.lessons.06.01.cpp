@@ -5,68 +5,56 @@
 
 #include <map>
 #include "allocator.h"
+#include "container.h"
+
+template<typename T>
+constexpr T fact(T n)
+{
+    return n > 1 ? n * fact(n-1) : 1;
+}
+
+void try_std_allocator_std_container()
+{
+    auto m = std::map<size_t, size_t> {};
+    for(size_t i = 0; i < 10; ++i)
+        m[i] = fact(i);
+    for(auto v : m)
+        std::cout << v.first << ' ' << v.second << std::endl;
+}
+
+void try_custom_allocator_std_container()
+{
+    auto m = std::map<size_t, size_t, std::less<size_t>, custom_allocator<std::pair<size_t, size_t>, 10> > {};
+    for(size_t i = 0; i < 10; ++i)
+        m[i] = fact(i);
+    for(auto v : m)
+        std::cout << v.first << ' ' << v.second << std::endl;
+}
+
+void try_std_allocator_custom_container()
+{
+    auto ll = linked_list<int, std::allocator<int> > {};
+    for(size_t i = 0; i < 10; ++i)
+        ll.push_back(i);
+    for(auto v : ll)
+        std::cout << v << std::endl;
+}
+
+void try_custom_allocator_custom_container()
+{
+    auto ll = linked_list<int, custom_allocator<int, 10> > {};
+    for(size_t i = 0; i < 10; ++i)
+        ll.push_back(i);
+    for(auto v : ll)
+        std::cout << v << std::endl;
+}
 
 int main()
 {
-    {
-        //        logging_allocator< std::pair< const std::string, int >, 4 > la{};
-        auto m = std::map<const std::string, int, std::less<const std::string>, logging_allocator< std::pair< const std::string, int >, 4 > >{};
-        pages.dump(std::cout);
-
-        std::cout << "add 2" << std::endl;
-        m["2"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 3" << std::endl;
-        m["3"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 1" << std::endl;
-        m["1"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 4" << std::endl;
-        m["4"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 5" << std::endl;
-        m["5"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 6" << std::endl;
-        m["6"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 7" << std::endl;
-        m["7"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "remove 3" << std::endl;
-        m.erase("3");
-        pages.dump(std::cout);
-
-        std::cout << "add 8" << std::endl;
-        m["8"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 9" << std::endl;
-        m["9"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "add 0" << std::endl;
-        m["0"] = 1;
-        pages.dump(std::cout);
-
-        std::cout << "print content" << std::endl;
-        size_t count = 0;
-        for (const auto &p : m) {
-            std::cout << "[ " << count << " ]: \"" << p.first << "\": " << p.second << std::endl;
-            if(++count == 20)
-                break;
-        }
-
-        std::cout << "leave scope" << std::endl;
-    }
+    try_std_allocator_std_container();
+    try_custom_allocator_std_container();
+    try_std_allocator_custom_container();
+    try_custom_allocator_custom_container();
 
 #ifndef __unix__
     getchar();

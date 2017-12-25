@@ -4,7 +4,7 @@
 #include "stdafx.h"
 
 #ifdef __unix__
-#define BOOST_TEST_MODULE main
+#define BOOST_TEST_MODULE TestMain
 #endif
 #include <boost/test/unit_test.hpp>
 

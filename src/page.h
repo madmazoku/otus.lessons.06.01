@@ -8,46 +8,46 @@
 
 struct page {
     page* next;
-    void* data;
-    void* usage;
+    uint8_t* data;
+    uint8_t* usage;
     size_t alloc_size;
 
-    virtual page* create() = 0;
+    virtual void construct(page*) = 0;
     virtual size_t page_size() = 0;
     virtual size_t obj_size() = 0;
+    virtual size_t self_size() = 0;
 
     page() : next(nullptr), data(nullptr), usage(nullptr), alloc_size(0)
     {
     }
     ~page()
     {
-        if (next)
-            delete next;
-        if (data)
-            std::free(data);
-        if (usage)
-            std::free(usage);
+        if (data) {
+            next->~page();
+            std::free(reinterpret_cast<void*>(data));
+        }
     }
 
     void set_usage(size_t start, size_t n, uint8_t claim)
     {
         if(n > 0)
-            std::memset((void*)((uint8_t*)usage + start), claim, n);
+            std::memset(reinterpret_cast<void*>(usage + start), claim, n);
     }
 
     void* allocate(size_t n)
     {
         if (data == nullptr) {
             alloc_size = n > page_size() ? n : page_size();
-            data = std::malloc(alloc_size * obj_size());
-            usage = reinterpret_cast<uint8_t*>(std::malloc(alloc_size * obj_size()));
-            next = create();
-            if (!data || !usage || !next)
+            size_t sz = alloc_size * obj_size() + alloc_size + self_size();
+            data = reinterpret_cast<uint8_t*>(std::malloc(sz));
+            if (!data)
                 throw std::bad_alloc();
-            std::memset(data, 0x00, alloc_size * obj_size());
+            std::memset(reinterpret_cast<void*>(data), 0x00, sz);
+            usage = data + alloc_size * obj_size();
+            next = reinterpret_cast<page*>(data + alloc_size * obj_size() + alloc_size);
+            construct(next);
             set_usage(0, n, 0x01);
-            set_usage(n, alloc_size - n, 0x00);
-            return data;
+            return reinterpret_cast<void*>(data);
         }
 
         if (n <= alloc_size) {
@@ -97,9 +97,11 @@ struct page {
 
 template<typename T, size_t size = 11>
 struct page_impl : public page {
-    page* create() override
+    using page_type = page_impl<T, size>;
+
+    void construct(page* p)
     {
-        return new page_impl<T, size>;
+        new ((void *)p) page_type();
     }
     size_t page_size() override
     {
@@ -108,6 +110,10 @@ struct page_impl : public page {
     size_t obj_size() override
     {
         return  sizeof(T);
+    }
+    size_t self_size() override
+    {
+        return  sizeof(page_impl<T, size>);
     }
 };
 
